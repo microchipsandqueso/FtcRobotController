@@ -32,8 +32,10 @@ package org.firstinspires.ftc.teamcode;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 import com.qualcomm.robotcore.eventloop.opmode.Disabled;
+import com.qualcomm.robotcore.hardware.ColorSensor;
 import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.DigitalChannel;
+import com.qualcomm.robotcore.hardware.Servo;
 import com.qualcomm.robotcore.hardware.TouchSensor;
 import com.qualcomm.robotcore.util.ElapsedTime;
 import com.qualcomm.robotcore.util.Range;
@@ -62,8 +64,10 @@ public class ProgrammingBoard extends LinearOpMode {
 
     private DcMotor motor;
     private TouchSensor touchSensor;
+    private Servo servo;
+    private double servoPos;
 
-
+    private ColorSensor colorSensor;
 
 
     @Override
@@ -74,6 +78,8 @@ public class ProgrammingBoard extends LinearOpMode {
         touchSensor = hardwareMap.get(TouchSensor.class, "touchSensor0");
         motor = hardwareMap.get(DcMotor.class, "motor0");
         motor.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+        servo = hardwareMap.get(Servo.class, "servo0");
+        colorSensor = hardwareMap.get(ColorSensor.class, "colorSensor0");
 
         // Initialize the hardware variables. Note that the strings used here as parameters
         // to 'get' must correspond to the names assigned during the robot configuration
@@ -90,15 +96,36 @@ public class ProgrammingBoard extends LinearOpMode {
         // Wait for the game to start (driver presses PLAY)
         waitForStart();
         runtime.reset();
+        servo.setPosition(0);
+        servoPos = 0;
 
         // run until the end of the match (driver presses STOP)
         while (opModeIsActive()) {
 
-            if (!touchSensor.isPressed()) {
-                motor.setPower(-gamepad1.right_stick_y);
+            if (colorSensor.blue() < 300) {
+                if (!touchSensor.isPressed()) {
+                    motor.setPower(-gamepad1.right_stick_y);
+                } else {
+                    motor.setPower(gamepad1.right_stick_y);
+                }
+            } else if (colorSensor.blue() >= 300 && colorSensor.blue() < 500) {
+                motor.setPower(-0.5);
             } else {
-                motor.setPower(gamepad1.right_stick_y);
+                motor.setPower(0.5);
             }
+
+            if (gamepad1.a) {
+                servoPos = 0.33;
+            } else {
+                servoPos = gamepad1.left_trigger;
+            }
+
+            servo.setPosition(servoPos);
+
+            telemetry.addData("amount of red:", colorSensor.red());
+            telemetry.addData("amount of green:", colorSensor.green());
+            telemetry.addData("amount of blue:", colorSensor.blue());
+            telemetry.update();
 
 //            gamepad stuff
 
